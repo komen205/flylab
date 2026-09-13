@@ -27,7 +27,7 @@ for line in sys.stdin:
         counts,wall=brain.step(light,50.0)
         action=controls.decode(counts,.05)
         result={'frame':req['frame'],'turn':action['turn'],'forward':action['forward'],
-            'spikes':int(counts.sum()),'neural_ms':brain.sim_ms,'compute_seconds':wall,
+            'attack':bool(action['attack']),'spikes':int(counts.sum()),'neural_ms':brain.sim_ms,'compute_seconds':wall,
             'pixel_sha256':hashlib.sha256(rgb.tobytes()).hexdigest(),
             'readouts':action['readouts']}
         Image.fromarray(rgb).resize((640,480),Image.Resampling.NEAREST).save(run/'camera.png')

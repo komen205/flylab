@@ -2,7 +2,7 @@
 
 Experimental Minecraft bot controlled by a fixed fly-connectome simulation, adapted from [DOOMFLY](https://github.com/nftechie/doomfly). Includes a lightweight phone viewer suitable for a Cloudflare Tunnel.
 
-**It walks and turns. It does not learn, mine, build, plan, or understand Minecraft.** Connectivity comes from reconstructed MaleCNS data; neuron dynamics, visual input and motor mappings are approximations. Movement is not evidence of intelligence or biological fidelity.
+**It walks, turns and can perform restricted neural-triggered interactions. It does not learn, build, plan, or understand Minecraft.** Connectivity comes from reconstructed MaleCNS data; neuron dynamics, visual input and motor mappings are approximations. Movement is not evidence of intelligence or biological fidelity.
 
 ## How it works
 
@@ -10,7 +10,7 @@ Loaded blocks → 64×48 RGB camera → inferred retinal inputs → fixed native
 
 - 166,700 retained neurons and 25,582,938 directed connections in the pinned upstream graph.
 - 50 ms of simulated neural time per step, with no training or plasticity.
-- DNp20 activity maps to turning; DNpe017 maps to forward movement. Attack output is ignored.
+- DNp20 activity maps to turning; DNpe017 maps to forward movement. The BCI attack output (also derived from DNpe017 spikes) triggers restricted interactions.
 - Separate 256×192 viewer frames add procedural surface detail every three steps without changing the neural input.
 - The camera approximates solid blocks as cubes. It does not render entities or official textures.
 - Game physics advances in real time; neural and game time are not synchronized.
@@ -81,3 +81,13 @@ Checks cover ray intersections, changing-view pixels, bounded controls, retinal 
 ## Attribution
 
 See [THIRD_PARTY.md](THIRD_PARTY.md) and [DOOMFLY-LICENSE.txt](DOOMFLY-LICENSE.txt). Upstream engine/data are acquired separately and retain their respective terms. This project is not affiliated with Mojang or the connectome authors.
+
+## Restricted interactions
+
+On startup, the adapter equips a diamond pickaxe if one exists in its inventory. This is a scripted helper, not learned equipment selection.
+
+In live mode, interactions are enabled only in `minecraft:flylab`. Mining is restricted to clay at X/Z −14…14 and Y 101…104, within three blocks. Combat is restricted to slimes in those bounds with a one-second cooldown; players and pets are excluded. Normal-world interactions remain disabled.
+
+A neural attack signal starts a dig. Movement and neural stepping pause until that dig completes or the 2.5-second timeout cancels it. This scripted action hold avoids turning away midway; it is not learned persistence. The explicit block raycast handles level camera angles, which the dependency's cursor helper incorrectly rejects. Live clay removal was verified against server block state; live mob combat has not been verified.
+
+For Adventure-mode tests, provide a pickaxe with a clay-only `can_break` component appropriate to your server version. The adapter does not grant items or permissions itself. Use disposable blocks inside the test arena.
