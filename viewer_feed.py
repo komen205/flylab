@@ -31,6 +31,7 @@ class Handler(BaseHTTPRequestHandler):
                 png=(ROOT/'camera.png').read_bytes();Image.open(io.BytesIO(png)).verify()
             age=time.time()-(ROOT/'bot.jsonl').stat().st_mtime
             data={'online':age<10,'age':round(age,1),'frame':stats['frame'],
+                'controller':stats.get('controller','baseline'),'turn':stats['turn'],'rawTurn':stats.get('rawTurn',stats['turn']),'forward':stats['forward'],
                 'position':stats['position'],'spikes':stats['spikes'],
                 'computeMs':round(stats['compute_seconds']*1000,1),
                 'brainSeconds':round(neural['neural_ms']/1000,1),

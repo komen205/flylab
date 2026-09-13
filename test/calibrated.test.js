@@ -1,0 +1,5 @@
+const {test}=require('node:test'),a=require('node:assert/strict'),{createController,defaults}=require('../calibrated_controls')
+const sample=(turn,rate)=>({turn,forward:20,attack:true,readouts:[{type:'DNpe017',rate_hz:rate}]})
+test('tonic bias no longer commands constant turning or attacking',()=>{const map=createController();let r;for(let i=0;i<100;i++)r=map(sample(defaults.turnBias,defaults.forwardRateBaseline),i*50);a.equal(r.turn,0);a.equal(r.forward,10);a.equal(r.attack,false)})
+test('left and right deviations are retained and silent activity stops',()=>{a(createController()(sample(defaults.turnBias+2,60)).turn>0);a(createController()(sample(defaults.turnBias-2,60)).turn<0);const r=createController()(sample(5,0));a.equal(r.forward,0);a.equal(r.turn,0);a.equal(r.attack,false)})
+test('bursts are gated and cooldown prevents constant attacks',()=>{const map=createController();a.equal(map(sample(2,100),0).attack,true);a.equal(map(sample(2,100),100).attack,false);a.equal(map(sample(2,100),1600).attack,true);a.throws(()=>map(sample(NaN,60)))})

@@ -3,6 +3,8 @@ const {render}=require('./render'),{movement}=require('./controls')
 const {Vec3}=require('vec3')
 const {createInteractions}=require('./interactions')
 const {mobility}=require('./mobility')
+const {createFlight}=require('./flight')
+const {createController}=require('./calibrated_controls')
 const sleep=ms=>new Promise(r=>setTimeout(r,ms))
 const frames=Number(process.env.FRAMES||40)
 if(!Number.isInteger(frames)||frames<0)throw Error('FRAMES must be a nonnegative integer (0 = continuous)')
@@ -25,6 +27,7 @@ worker.on('error',e=>{console.error(e);stop();process.exitCode=1})
 async function main(){
  const ready=await next();if(!ready.ready)throw Error(JSON.stringify(ready));console.log('NEURAL_READY',JSON.stringify(ready))
  bot=mineflayer.createBot({host:process.env.MC_HOST||'127.0.0.1',port:Number(process.env.MC_PORT||(live?25565:25586)),username:process.env.MC_USERNAME||(live?'FlyBrainLab':'FlyBrain'),auth:process.env.MC_AUTH||'offline'})
+ const flight=createFlight(bot)
  for(const event of ['login','respawn'])bot._client.on(event,p=>{bot.labWorld=((p.worldState||p).worldName||(p.worldState||p).name);console.log('LAB_WORLD',bot.labWorld)})
  bot.on('error',e=>console.error('BOT_ERROR',e.message));bot.on('kicked',e=>console.error('KICKED',e))
  bot.on('end',()=>{stop();process.exitCode=0})
@@ -43,11 +46,12 @@ async function main(){
  if(pick)await bot.equip(pick,'hand')
  let lastJump=0
  const interact=createInteractions(bot)
+ const controller=createController()
  console.log('BOT_SPAWNED',bot.version)
  for(let frame=0;(frames===0||frame<frames)&&!ended;frame++){
    bot.clearControlStates()
    const p=bot.entity.position
-   const rgb=render([p.x,p.y+1.62,p.z],bot.entity.yaw,bot.entity.pitch,(x,y,z)=>bot.blockAt(new Vec3(x,y,z)))
+   const rgb=render([p.x,p.y+1.62,p.z],bot.entity.yaw,bot.entity.pitch,(x,y,z)=>bot.blockAt(new Vec3(x,y,z)),64,48,true)
    if(frame%3===0){
      const view=render([p.x,p.y+1.62,p.z],bot.entity.yaw,bot.entity.pitch,(x,y,z)=>bot.blockAt(new Vec3(x,y,z)),256,192,true)
      const tmp=path.join(__dirname,'run/viewer.ppm.tmp')
@@ -55,17 +59,19 @@ async function main(){
      fs.renameSync(tmp,path.join(__dirname,'run/viewer.ppm'))
    }
    worker.stdin.write(JSON.stringify({rgb:rgb.toString('base64'),width:64,height:48,frame})+'\n')
-   const action=await next();if(action.error)throw Error(action.error)
+   const rawAction=await next();if(rawAction.error)throw Error(rawAction.error)
+   const action=controller(rawAction)
    await interact(action.attack===true && (!live||bot.labWorld==='minecraft:flylab'))
    const m=movement(action)
    await bot.look(bot.entity.yaw+m.yawDelta,bot.entity.pitch,true)
+   flight.update(action)
    const extra=mobility(action,Date.now(),lastJump,bot.entity.isInWater,bot.entity.onGround)
-   if(extra.jump){bot.setControlState('jump',true);lastJump=Date.now()}
-   bot.setControlState('sprint',extra.sprint)
-   if(m.forwardMs>=1){bot.setControlState('forward',true);await sleep(m.forwardMs)}
+   if(!flight.active&&extra.jump){bot.setControlState('jump',true);lastJump=Date.now()}
+   bot.setControlState('sprint',!flight.active&&extra.sprint)
+   if(m.forwardMs>=1){bot.setControlState('forward',!flight.active);await sleep(m.forwardMs)}
    bot.clearControlStates()
    await sleep(Math.max(0,50-m.forwardMs))
-   const row={frame,position:bot.entity.position,yaw:bot.entity.yaw,turn:action.turn,forward:action.forward,attack:action.attack,spikes:action.spikes,compute_seconds:action.compute_seconds}
+   const row={frame,controller:action.controller,rawTurn:action.rawTurn,rawForward:action.rawForward,position:bot.entity.position,yaw:bot.entity.yaw,turn:action.turn,forward:action.forward,attack:action.attack,flying:flight.active,spikes:action.spikes,compute_seconds:action.compute_seconds}
    fs.appendFileSync(path.join(__dirname,'run/bot.jsonl'),JSON.stringify(row)+'\n')
    console.log('FRAME',JSON.stringify(row))
  }

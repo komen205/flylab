@@ -97,3 +97,9 @@ For Adventure-mode tests, provide a pickaxe with a clay-only `can_break` compone
 The viewer includes a fixed sample of 512 neurons, selected evenly across model indices, plus the 14 monitored motor outputs. Each square shows actual spike counts for the latest 50 ms of simulated time; tap it for its neuron ID. The grid is not an anatomical map. A full-model counter reports the number of neurons with nonzero spikes in that step. Only sampled telemetry is displayed; browser polling can skip simulation steps.
 
 Additional scripted movement mappings enable sprinting at high forward drive, a grounded jump on an attack signal with a one-second cooldown, and upward swimming while forward drive is active in water. These are game-control mappings, not learned behaviour. Live mining and combat remain restricted to the test world.
+
+## Calibrated controller and flight
+
+`calibrated_controls.js` applies a frozen controller calibration measured from 500 pre-change samples: turn bias 2.193901 degrees/step and DNpe017 reference 59.5255 Hz. A deadband and smoothing preserve deviations around that offset. Forward speed uses a graded response instead of saturating, and interactions require a stronger burst with a cooldown. Neural weights remain unchanged. These engineering settings may not generalize across scenes and do not constitute learned navigation. The neural camera now includes procedural surface detail. The viewer reports raw versus applied turning.
+
+`flight.js` activates only when the server grants flight permission. It maps forward drive to bounded horizontal velocity and gentle ascent/descent within six blocks above takeoff, while retaining collision physics. It hovers on stale neural input and restores gravity when permission is revoked. Flight permission must be granted again if the server resets it after login. No server permissions are granted by this repository.

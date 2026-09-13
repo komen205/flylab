@@ -1,0 +1,2 @@
+const {test}=require('node:test'),a=require('node:assert/strict'),{flightVelocity}=require('../flight')
+test('flight is bounded and silent drive hovers',()=>{a.deepEqual(flightVelocity({forward:0},0,65,64),{x:-0,y:0,z:-0});a.equal(flightVelocity({forward:20},0,70,64).y,0);a.equal(flightVelocity({forward:5},0,64,64).y,0);const v=flightVelocity({forward:999},0,65,64);a.equal(v.z,-.12);a.equal(v.y,.06)})
