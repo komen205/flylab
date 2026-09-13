@@ -1,0 +1,12 @@
+node_modules/
+run/
+test-server/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.log
+.env*
+.dev.vars*
+.venv/
+*.pem
+*.key
