@@ -35,7 +35,8 @@ class Handler(BaseHTTPRequestHandler):
                 'computeMs':round(stats['compute_seconds']*1000,1),
                 'brainSeconds':round(neural['neural_ms']/1000,1),
                 'camera':'data:image/png;base64,'+base64.b64encode(png).decode(),
-                'readouts':[{'name':r['type']+' '+r['side'],'rate':r['rate_hz']} for r in neural['readouts']]}
+                'neuralFrame':neural['frame'],'sample':neural.get('sample',[]),'activeNeurons':neural.get('activeNeurons'),
+                'readouts':[{'id':r['id'],'name':r['type']+' '+r['side'],'type':r['type'],'spikes':r['spikes'],'rate':r['rate_hz']} for r in neural['readouts']]}
             body=json.dumps(data).encode();self.send_response(200)
             self.send_header('Content-Type','application/json');self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(body)
         except Exception:

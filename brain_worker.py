@@ -13,6 +13,7 @@ from doom.engine import NeuralControls
 root=UPSTREAM/'outputs/doom/malecns_v1'
 manifest=json.loads((root/'manifest.json').read_text())
 brain=NativeBrain(root/'graph.npz')
+sample_indices=np.linspace(0,brain.n-1,512,dtype=int)
 controls=NeuralControls(manifest['readouts'],mode='bci')
 run=Path(__file__).resolve().parent/'run'; run.mkdir(exist_ok=True)
 print(json.dumps({'ready':True,'neurons':brain.n,'edges':len(brain.post),'learning':False}),flush=True)
@@ -29,6 +30,8 @@ for line in sys.stdin:
         result={'frame':req['frame'],'turn':action['turn'],'forward':action['forward'],
             'attack':bool(action['attack']),'spikes':int(counts.sum()),'neural_ms':brain.sim_ms,'compute_seconds':wall,
             'pixel_sha256':hashlib.sha256(rgb.tobytes()).hexdigest(),
+            'activeNeurons':int(np.count_nonzero(counts)),
+            'sample':[{'id':str(brain.ids[i]),'spikes':int(counts[i])} for i in sample_indices],
             'readouts':action['readouts']}
         Image.fromarray(rgb).resize((640,480),Image.Resampling.NEAREST).save(run/'camera.png')
         with (run/'neural.jsonl').open('a') as f:f.write(json.dumps(result)+'\n')

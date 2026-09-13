@@ -1,0 +1,3 @@
+const {test}=require('node:test'),a=require('node:assert/strict'),{mobility}=require('../mobility')
+test('no neural drive means no extra movement',()=>a.deepEqual(mobility({forward:0,attack:true},2000,0,true,true),{sprint:false,jump:false}))
+test('jump has cooldown and requires ground; swim uses upward control',()=>{a.equal(mobility({forward:20,attack:true},2000,0,false,true).jump,true);a.equal(mobility({forward:20,attack:true},2000,1900,false,true).jump,false);a.equal(mobility({forward:20,attack:true},2000,0,false,false).jump,false);a.deepEqual(mobility({forward:20},2000,1900,true,false),{jump:true,sprint:false})})

@@ -91,3 +91,9 @@ In live mode, interactions are enabled only in `minecraft:flylab`. Mining is res
 A neural attack signal starts a dig. Movement and neural stepping pause until that dig completes or the 2.5-second timeout cancels it. This scripted action hold avoids turning away midway; it is not learned persistence. The explicit block raycast handles level camera angles, which the dependency's cursor helper incorrectly rejects. Live clay removal was verified against server block state; live mob combat has not been verified.
 
 For Adventure-mode tests, provide a pickaxe with a clay-only `can_break` component appropriate to your server version. The adapter does not grant items or permissions itself. Use disposable blocks inside the test arena.
+
+## Expanded live activity viewer
+
+The viewer includes a fixed sample of 512 neurons, selected evenly across model indices, plus the 14 monitored motor outputs. Each square shows actual spike counts for the latest 50 ms of simulated time; tap it for its neuron ID. The grid is not an anatomical map. A full-model counter reports the number of neurons with nonzero spikes in that step. Only sampled telemetry is displayed; browser polling can skip simulation steps.
+
+Additional scripted movement mappings enable sprinting at high forward drive, a grounded jump on an attack signal with a one-second cooldown, and upward swimming while forward drive is active in water. These are game-control mappings, not learned behaviour. Live mining and combat remain restricted to the test world.

@@ -2,6 +2,7 @@ const mineflayer=require('mineflayer'),{spawn}=require('node:child_process'),rea
 const {render}=require('./render'),{movement}=require('./controls')
 const {Vec3}=require('vec3')
 const {createInteractions}=require('./interactions')
+const {mobility}=require('./mobility')
 const sleep=ms=>new Promise(r=>setTimeout(r,ms))
 const frames=Number(process.env.FRAMES||40)
 if(!Number.isInteger(frames)||frames<0)throw Error('FRAMES must be a nonnegative integer (0 = continuous)')
@@ -37,9 +38,10 @@ async function main(){
    }
  }
  await bot.waitForChunksToLoad();await sleep(1000)
- if(bot.entity.position.y<100)throw Error('Arena setup failed: bot is below the arena floor')
+ if((!live||bot.labWorld==='minecraft:flylab')&&bot.entity.position.y<100)throw Error('Arena setup failed: bot is below the arena floor')
  const pick=bot.inventory.items().find(i=>i.name==='diamond_pickaxe')
  if(pick)await bot.equip(pick,'hand')
+ let lastJump=0
  const interact=createInteractions(bot)
  console.log('BOT_SPAWNED',bot.version)
  for(let frame=0;(frames===0||frame<frames)&&!ended;frame++){
@@ -57,6 +59,9 @@ async function main(){
    await interact(action.attack===true && (!live||bot.labWorld==='minecraft:flylab'))
    const m=movement(action)
    await bot.look(bot.entity.yaw+m.yawDelta,bot.entity.pitch,true)
+   const extra=mobility(action,Date.now(),lastJump,bot.entity.isInWater,bot.entity.onGround)
+   if(extra.jump){bot.setControlState('jump',true);lastJump=Date.now()}
+   bot.setControlState('sprint',extra.sprint)
    if(m.forwardMs>=1){bot.setControlState('forward',true);await sleep(m.forwardMs)}
    bot.clearControlStates()
    await sleep(Math.max(0,50-m.forwardMs))
